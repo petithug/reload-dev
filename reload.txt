@@ -49,7 +49,7 @@ enum {
 	DDR(1),
 	RPR(2),
 	(255)
-} RouteMode; // draft-zong-p2psip-ddr-01
+} RouteMode; // draft-ietf-p2psip-ddr-00
 
 struct {
 	RouteMode               routemode;
@@ -137,8 +137,8 @@ enum {
 	exp_a_ans(36),
 	exp_b_req(37),
 	exp_b_ans(38),
-	path_track_req(101), // draft-ietf-p2psip-diagnostics
-	path_track_ans(102), // draft-ietf-p2psip-diagnostics
+	path_track_req(101), // draft-ietf-p2psip-diagnostics-06
+	path_track_ans(102), // draft-ietf-p2psip-diagnostics-06
 	error(0xffff),
 	(0..2^16-1)
 } MessageCode; // IANA registry "RELOAD Message Code"
@@ -316,7 +316,7 @@ struct {
 	SipRegistrationType   type;
 	uint16                length;
 	SipRegistrationData   data;
-} SipRegistration; // draft-ietf-p2psip-sip
+} SipRegistration; // draft-ietf-p2psip-sip-06
 
 struct {
 	NodeId                   serviceProvider;
