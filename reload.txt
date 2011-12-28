@@ -137,8 +137,8 @@ enum {
 	exp_a_ans(36),
 	exp_b_req(37),
 	exp_b_ans(38),
-	path_track_req(101), // draft-ietf-p2psip-diagnostics-06
-	path_track_ans(102), // draft-ietf-p2psip-diagnostics-06
+	path_track_req(101), // draft-ietf-p2psip-diagnostics-07
+	path_track_ans(102), // draft-ietf-p2psip-diagnostics-07
 	error(0xffff),
 	(0..2^16-1)
 } MessageCode; // IANA registry "RELOAD Message Code"
@@ -716,8 +716,8 @@ struct {
 enum {
 	reservedMessagesExtension(0),
 	exp-ext(1),
-	self_tuning_data(2), // draft-ietf-p2psip-self-tuning-04.  Currently 1!
-	Diagnostic_Ping(3), // draft-ietf-p2psip-diagnostics-06. Currently 1!
+	Diagnostic_Ping(2), // draft-ietf-p2psip-diagnostics-07
+	self_tuning_data(3), // draft-ietf-p2psip-self-tuning-04.  Currently 1!
 	(2^16-1)
 } MessageExtensionType; // IANA registry "RELOAD Extensions Registry"
 
@@ -729,51 +729,45 @@ struct {
 
 enum {
 	(2^16-1)
-} DiagnosticExtensionRequestType; // draft-ietf-p2psip-diagnostics-06
+} DiagnosticExtensionRequestType; // draft-ietf-p2psip-diagnostics-07
 
 struct {
 	DiagnosticExtensionRequestType type;
 	opaque diagnostic_extension_contents<0..2^32-1>;
-} DiagnosticExtension; // draft-ietf-p2psip-diagnostics-06
+} DiagnosticExtension; // draft-ietf-p2psip-diagnostics-07
 
 struct {
-	uint64 expiration; // NTP
-	uint64 timestampInitiated; // NTP
-	uint32 length;
-	select (length) {
-		case 0:
-			// dMFlags 0: reserved always 0
-			// dMFlags 1: STATUS_INFO
-			// dMFlags 2: ROUTING_TABLE_SIZE
-			// dMFlags 3: PROCESS_POWER
-			// dMFlags 4: BANDWIDTH
-			// dMFlags 5: SOFTWARE_VERSION
-			// dMFlags 6: MACHINE_UPTIME
-			// dMFlags 7: APP_UPTIME
-			// dMFlags 8: MEMORY_FOOTPRINT
-			// dMFlags 9: DATASIZE_STORED
-			// dMFlags 10: INSTANCES_STORED
-			// dMFlags 11: MESSAGES_SENT_RCVD
-			// dMFlags 12: EWMA_BYTES_SENT
-			// dMFlags 13: EWMA_BYTES_RCVD
-			// dMFlags 14: UNDERLAY_HOP
-			// dMFlags 15: BATTERY_STATUS
-			// dMFlags 16-62: unused - 0
-			// dMFlags 63: reserved always 0
-			uint64 dMFlags;
-
-		case > 0:
-			uint64 dMFlags;
-			DiagnosticExtension diagnostic_extensions[length]; // Found by SB.  Send correction
+	uint64 expiration;
+	uint64 timestampInitiated;
+	// dMFlags 0: reserved always 0
+	// dMFlags 1: STATUS_INFO
+	// dMFlags 2: ROUTING_TABLE_SIZE
+	// dMFlags 3: PROCESS_POWER
+	// dMFlags 4: BANDWIDTH
+	// dMFlags 5: SOFTWARE_VERSION
+	// dMFlags 6: MACHINE_UPTIME
+	// dMFlags 7: APP_UPTIME
+	// dMFlags 8: MEMORY_FOOTPRINT
+	// dMFlags 9: DATASIZE_STORED
+	// dMFlags 10: INSTANCES_STORED
+	// dMFlags 11: MESSAGES_SENT_RCVD
+	// dMFlags 12: EWMA_BYTES_SENT
+	// dMFlags 13: EWMA_BYTES_RCVD
+	// dMFlags 14: UNDERLAY_HOP
+	// dMFlags 15: BATTERY_STATUS
+	// dMFlags 16-62: unused - 0
+	// dMFlags 63: reserved always 0
+	uint64 dMFlags;
+	DiagnosticExtension diagnostic_extensions<0..2^32-1>; // Different from spec.
 	}
-} DiagnosticsRequest; // draft-ietf-p2psip-diagnostics-06
+} DiagnosticsRequest; // draft-ietf-p2psip-diagnostics-07
 
 struct {
 	Destination destination;
 	DiagnosticsRequest request; // Was DiagnosticRequest
-} PathTrackReq;	 // draft-ietf-p2psip-diagnostics-06
+} PathTrackReq;	 // draft-ietf-p2psip-diagnostics-07
 
-enum {
+enum { // Different from spec
 	reserved_0(0x0000),
 	STATUS_INFO(0x0001),
 	ROUTING_TABLE_SIZE(0x0002),
@@ -792,7 +786,7 @@ enum {
 	BATTERY_STATUS(0x000F),
 	reserved_63(0x003F),
 	(2^16-1)
-} DiagnosticKindId; // draft-ietf-p2psip-diagnostics-06
+} DiagnosticKindId; // draft-ietf-p2psip-diagnostics-07
 
 struct {
 	DiagnosticKindId kind;
@@ -855,19 +849,19 @@ struct {
 		/* This structure may be extended with new types*/
 	};
 	opaque diagnostic_info_contents<0..2^16-1>;
-} DiagnosticInfo; // draft-ietf-p2psip-diagnostics-06
+} DiagnosticInfo; // draft-ietf-p2psip-diagnostics-07
 
 struct {
-	uint64 expiration; // NTP
-	uint64 timestampReceived; // NTP
+	uint64 expiration;
+	uint64 timestampReceived;
 	uint8 hopCounter;
 	DiagnosticInfo diagnostic_info_list<0..2^32-1>;
-} DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-06
+} DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-07
 
 struct {
 	Destination next_hop;
 	DiagnosticResponse response;
-} PathTrackAns; // draft-ietf-p2psip-diagnostics-06
+} PathTrackAns; // draft-ietf-p2psip-diagnostics-07
 
 enum {
 	invalid(0),
@@ -890,16 +884,16 @@ enum {
 	Error_In_Progress(17),
 	Error_Exp_A(18),
 	Error_Exp_B(19),
-	Error_Underlay_Destination_Unreachable(101), // draft-ietf-p2psip-diagnostics-06
-	Error_Underlay_Time_Exceeded(102), // draft-ietf-p2psip-diagnostics-06
-	Error_Message_Expired(103), // draft-ietf-p2psip-diagnostics-06
-	Error_Upstream_Misrouting(104), // draft-ietf-p2psip-diagnostics-06
-	Error_Loop_Detected(105), // draft-ietf-p2psip-diagnostics-06
-	Error_TTL_Hops_Exceeded(106), // draft-ietf-p2psip-diagnostics-06
+	Error_Underlay_Destination_Unreachable(101), // draft-ietf-p2psip-diagnostics-07
+	Error_Underlay_Time_Exceeded(102), // draft-ietf-p2psip-diagnostics-07
+	Error_Message_Expired(103), // draft-ietf-p2psip-diagnostics-07
+	Error_Upstream_Misrouting(104), // draft-ietf-p2psip-diagnostics-07
+	Error_Loop_Detected(105), // draft-ietf-p2psip-diagnostics-07
+	Error_TTL_Hops_Exceeded(106), // draft-ietf-p2psip-diagnostics-07
 	(0..2^16-1)
 } ErrorCode; // IANA registry "RELOAD Error Code"
 
-public struct {
+struct {
 	ErrorCode          error_code;
 	uint16             length;
 	select (error_code) {
@@ -923,16 +917,14 @@ public struct {
 		case Error_Config_Too_Old:
 		case Error_Config_Too_New:
 		case Error_In_Progress:
-			opaque[length] error_info; // UTF-8 character string
-
-		case Error_Underlay_Destination_Unreachable: // draft-ietf-p2psip-diagnostics-06
+		case Error_Underlay_Destination_Unreachable: // draft-ietf-p2psip-diagnostics-07
 			// "net unreachable" padded with 0
 			// "host unreachable" padded with 0
 			// "protocol unreachable" padded with 0
 			// "port unreachable" padded with 0
 			// "fragmentation needed" padded with 0
 			// "source route failed" padded with 0
-			opaque[32];
+			opaque[length] error_info; // UTF-8 character string
 
 		/* This structure may be extended with new types*/
 	};
@@ -946,7 +938,7 @@ struct {
 		case self_tuning_data: // draft-ietf-p2psip-self-tuning-04
 			SelfTuningData self_tuning_data;
 
-		case Diagnostic_Ping: // draft-ietf-p2psip-diagnostics-06
+		case Diagnostic_Ping: // draft-ietf-p2psip-diagnostics-07
 			select (message_code) {
 				case ping_req:
 					DiagnosticsRequest diagnostics;
@@ -1051,10 +1043,10 @@ struct {
 		case config_update_ans:
 			ConfigUpdateAns config_update_ans;
 
-		case path_track_req: // draft-ietf-p2psip-diagnostics-06
+		case path_track_req: // draft-ietf-p2psip-diagnostics-07
 			PathTrackReq   path_tracl_req;
 
-		case path_track_ans: // draft-ietf-p2psip-diagnostics-06
+		case path_track_ans: // draft-ietf-p2psip-diagnostics-07
 			PathTrackAns   path_tracl_ans;
 
 		case error:
