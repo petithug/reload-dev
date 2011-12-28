@@ -738,7 +738,7 @@ struct {
 
 struct {
 	uint64 expiration;
-	uint64 timestampInitiated;
+	uint64 timestamp_initiated;
 	// dMFlags 0: reserved always 0
 	// dMFlags 1: STATUS_INFO
 	// dMFlags 2: ROUTING_TABLE_SIZE
@@ -853,8 +853,8 @@ struct {
 
 struct {
 	uint64 expiration;
-	uint64 timestampReceived;
-	uint8 hopCounter;
+	uint64 timestamp_received;
+	uint8 hop_counter;
 	DiagnosticInfo diagnostic_info_list<0..2^32-1>;
 } DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-07
 
