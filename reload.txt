@@ -286,7 +286,7 @@ enum {
 	RESERVED_LAST_CONTACT(14),
 	RESERVED_RTT(15),
 	CERTIFICATE_BY_USER(16),
-	REDIR(104), // draft-p2psip-service-discovery-03
+	REDIR(104), // draft-p2psip-service-discovery-04
 	(0..2^32-1)
 } KindId; // IANA registry "RELOAD Data Kind-ID"
 
@@ -318,19 +318,23 @@ struct {
 	SipRegistrationData   data;
 } SipRegistration; // draft-ietf-p2psip-sip-06
 
-struct {
-	NodeId                   serviceProvider;
-	opaque                   namespace<0..2^16-1>;
-	uint16                   level;
-	uint16                   node;
-
-	/* This type can be extended */
-} RedirServiceProviderData; // draft-p2psip-service-discovery-03
+enum {
+    none(0),
+    (255)
+} RedirServiceProviderExtType; // draft-p2psip-service-discovery-04
 
 struct {
-	uint16                   length;
-	RedirServiceProviderData data;
-} RedirServiceProvider; // draft-p2psip-service-discovery-03
+    RedirServiceProviderExtType	type;
+	NodeId                      serviceProvider;
+	opaque                      namespace<0..2^16-1>;
+	uint16                      level;
+	uint16                      node;
+	uint16                      length;
+
+    select (type) {
+        /* This type can be extended */
+	} extension;
+} RedirServiceProvider; // draft-p2psip-service-discovery-04
 
 struct {
 	Boolean                exists;
@@ -346,7 +350,7 @@ struct {
 		case CERTIFICATE_BY_USER:
 			opaque          certificate[length];
 
-		case REDIR: // draft-p2psip-service-discovery-03
+		case REDIR: // draft-p2psip-service-discovery-04
 			RedirServiceProvider redir;
 
 	/* This structure may be extended */
