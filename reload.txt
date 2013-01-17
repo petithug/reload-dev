@@ -1,1105 +1,1199 @@
-// Unless specified, all the definitions are from draft-ietf-p2psip-base-19
+// Copyright (c) 2013 IETF Trust, C.Jennings, B. Lowekamp, E. Rescorla,
+// S.Baset and H. Schulzrinne for draft-ietf-p2psip-base-24
+// Copyright (c) 2012 IETF Trust, N. Zong, X. Jiang, R. Even and Y. Zhang
+// for draft-ietf-p2psip-ddr-03.
+// Copyright (c) 2012 IETF Trust, H. Song, X. Jiang, R. Even and D. Bryan for
+// draft-ietf-p2psip-diagnostics-09.
+// Copyright (c) 2012 IETF Trust, C.Jennings, B. Lowekamp, E.Rescorla,
+// S. Baset, H. Schulzrinne and T C. Schmidt for draft-ietf-p2psip-sip-08.
+// Copyright (c) 2012 IETF Trust, J. Maenppa and G. Camarillo for
+// draft-ietf-p2psip-service-discovery-06.
+// Copryright (c) 2012 IETF Trust, J. Maenpaa, G. Camarillo and J. Hautakorpi
+// for draft-ietf-p2psip-self-tuning-06.
+// Copyright (c) 2012 IETF Trust, A. Knauf, G. Hege, T C. Schmidt and
+// M. Waehlisch for draft-ietf-p2psip-share-00.
+// Copyright (c) 2012 IETF Trust, A. Knauf, T C. Schmidt, G. Gege and
+// M. Waehlisch for draft-ietf-p2psip-disco-00.
+// Copyright (c) 2012-13 Marc Petit-Huguenin for the modifications and
+// additional content
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// • Redistributions of source code must retain the above copyright notice,
+//   this list of conditions and the following disclaimer.
+//
+// • Redistributions in binary form must reproduce the above copyright notice,
+//   this list of conditions and the following disclaimer in the documentation
+//   and/or other materials provided with the distribution.
+//
+// • Neither the name of Internet Society, IETF or IETF Trust, nor the names of
+//   specific contributors, may be used to endorse or promote products derived
+//   from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
+//
+// Unless specified otherwise, all the definitions are from
+// draft-ietf-p2psip-base
+// This document covers only RFCs and standard track internet-drafts.
 
-typedef opaque       NodeId[NodeIdLength];	// NodeIdLength is defined
-											// in the configuration file.
-											// Special case: all 1 and all 0.
+
+typedef opaque       NodeId[NodeIdLength];  // NodeIdLength is defined
+// configuration file.
+// Special case: all 1 (wildcard) and all 0 (invalid)
 
 typedef opaque       ResourceId<0..2^8-1>;
 
 select (destination_type) {
-	case node:
-		NodeId               node_id;
+    case node:
+        NodeId               node_id;
 
-	case resource:
-		ResourceId           resource_id;
+    case resource:
+        ResourceId           resource_id;
 
-	case compressed:
-		opaque               compressed_id<0..2^8-1>;
+    case opaque_id_type:
+        opaque               opaque_id<0..2^8-1>;
 
-	/* This structure may be extended with new types */
+    /* This structure may be extended with new types */
 } DestinationData;
 
+// Note that the 0 values in the draft are named invalid<Type>, but I use the shorter name here, and in other places.
 enum {
-	reserved(0),
-	node(1),
-	resource(2),
-	compressed(3),
-	/* 128-255 not allowed */ (255)
+    invalid(0),
+    node(1),
+    resource(2),
+    opaque_id_type(3),
+    /* 128-255 not allowed */ (255)
 } DestinationType;
 
 struct {
-	DestinationType         type;
-	uint8                   length;
-	DestinationData         destination_data;
+    DestinationType         type;
+    uint8                   length;
+    DestinationData         destination_data;
 } Destination;
 
 struct {
-	uint16               compressed_id; /* top bit MUST be 1 */
+    uint16               opaque_id; /* top bit MUST be 1 */
 } Destination;
 
 enum {
-	reservedForwarding(0),
-	exp-forward(1),
-	extensive_routing_mode(2), // draft-ietf-p2psip-ddr-00
-	(255)
-} ForwardingOptionsType; // IANA registry "Forwarding Option Registry"
+    invalid(0),
+    exp-forward(1),
+    extensive_routing_mode(2), // draft-ietf-p2psip-ddr-03
+    (255)
+} ForwardingOptionType; // IANA registry "Forwarding Option Registry"
 
 enum {
-	reserved(0),
-	DDR(1),
-	RPR(2),
-	(255)
-} RouteMode; // draft-ietf-p2psip-ddr-00
+    invalid(0),
+    DDR(1),
+    RPR(2),
+    (255)
+} RouteMode; // draft-ietf-p2psip-ddr-03
 
 struct {
-	RouteMode               routemode;
-	OverlayLinkType         transport; // Incorrect in spec
-	IpAddressPort           ipaddressport;
-	Destination             destination<1..2>; // Does not work!
-} ExtensiveRoutingModeOption; // draft-ietf-p2psip-ddr-00
+    RouteMode               routemode;
+    OverlayLinkType         transport;
+    IpAddressPort           ipaddressport;
+    Destination             destination<1..2^8-1>;
+} ExtensiveRoutingModeOption; // draft-ietf-p2psip-ddr-03
 
 struct {
-	ForwardingOptionsType     type;
-	// flags 0: FORWARD_CRITICAL
-	// flags 1: DESTINATION_CRITICAL
-	// flags 2: RESPONSE_COPY
-	// flags 3: IGNORE_STATE_KEEPING (draft-ietf-p2psip-ddr-00)
-	uint8                     flags;
-	uint16                    length;
-	select (type) {
-		case extensive_routing_mode: // draft-ietf-p2psip-ddr-00
-                                     // bad type currently
-			ExtensiveRoutingModeOption mode_option;
+    ForwardingOptionType     type;
+    // flags 0: FORWARD_CRITICAL
+    // flags 1: DESTINATION_CRITICAL
+    // flags 2: RESPONSE_COPY
+    // flags 3: IGNORE_STATE_KEEPING (draft-ietf-p2psip-ddr-03)
+    uint8                     flags;
+    uint16                    length;
+    select (type) {
+        case extensive_routing_mode: // draft-ietf-p2psip-ddr-03
+            ExtensiveRoutingModeOption mode_option;
 
-	/* This type may be extended */
-	} option;
+        /* This type may be extended */
+    } option;
 } ForwardingOption;
 
 struct {
-	uint32             relo_token; // always 0xd2454c4f
-	uint32             overlay;
-	uint16             configuration_sequence; // 0 = do not check sequence
-	uint8              version; // 0x01 = draft, 0x10 = RFC (when published)
-	uint8              ttl;
-	// fragment 31: fragment (always 1)
-	// fragment 30: last fragment
-	// fragment 24-29: always 0
-	// fragment 0-23: fragment offset
-	uint32             fragment;
-	uint32             length;
-	uint64             transaction_id;
-	uint32             max_response_length;
-	uint16             via_list_length;
-	uint16             destination_list_length;
-	uint16             options_length;
-	Destination        via_list[via_list_length];
-	Destination        destination_list [destination_list_length];
-	ForwardingOption   options[options_length];
+    uint32             relo_token; // always 0xd2454c4f
+    uint32             overlay;
+    uint16             configuration_sequence; // 0 = do not check sequence
+    uint8              version; // 0x01 = draft, 0x10 = RFC (when published)
+    uint8              ttl;
+    // fragment 31: fragment (always 1)
+    // fragment 30: last fragment
+    // fragment 24-29: always 0
+    // fragment 0-23: fragment offset
+    uint32             fragment;
+    uint32             length;
+    uint64             transaction_id;
+    uint32             max_response_length;
+    uint16             via_list_length;
+    uint16             destination_list_length;
+    uint16             options_length;
+    Destination        via_list[via_list_length];
+    Destination        destination_list [destination_list_length];
+    ForwardingOption   options[options_length];
 } ForwardingHeader;
 
 enum {
-	invalid(0),
-	probe_req(1),
-	probe_ans(2),
-	attach_req(3),
-	attach_ans(4),
-	reserved_5(5), // need to find what is was
-	reserved_6(6), // need to find what is was
-	store_req(7),
-	store_ans(8),
-	fetch_req(9),
-	fetch_ans(10),
-	reserved_remove_req(11),
-	reserved_remove_ans(12),
-	find_req(13),
-	find_ans(14),
-	join_req(15),
-	join_ans(16),
-	leave_req(17),
-	leave_ans(18),
-	update_req(19),
-	update_ans(20),
-	route_query_req(21),
-	route_query_ans(22),
-	ping_req(23),
-	ping_ans(24),
-	stat_req(25),
-	stat_ans(26),
-	reserved_attachlite_req(27),
-	reserved_attachlite_ans(28),
-	app_attach_req(29),
-	app_attach_ans(30),
-	reserved_app_attachlite_req(31),
-	reserved_app_attachlite_ans(32),
-	config_update_req(33),
-	config_update_ans(34),
-	exp_a_req(35),
-	exp_a_ans(36),
-	exp_b_req(37),
-	exp_b_ans(38),
-	path_track_req(101), // draft-ietf-p2psip-diagnostics-07
-	path_track_ans(102), // draft-ietf-p2psip-diagnostics-07
-	error(0xffff),
-	(0..2^16-1)
+    invalid(0),
+    probe_req(1),
+    probe_ans(2),
+    attach_req(3),
+    attach_ans(4),
+    reserved_5(5), // need to find what is was
+    reserved_6(6), // need to find what is was
+    store_req(7),
+    store_ans(8),
+    fetch_req(9),
+    fetch_ans(10),
+    reserved_remove_req(11),
+    reserved_remove_ans(12),
+    find_req(13),
+    find_ans(14),
+    join_req(15),
+    join_ans(16),
+    leave_req(17),
+    leave_ans(18),
+    update_req(19),
+    update_ans(20),
+    route_query_req(21),
+    route_query_ans(22),
+    ping_req(23),
+    ping_ans(24),
+    stat_req(25),
+    stat_ans(26),
+    reserved_attachlite_req(27),
+    reserved_attachlite_ans(28),
+    app_attach_req(29),
+    app_attach_ans(30),
+    reserved_app_attachlite_req(31),
+    reserved_app_attachlite_ans(32),
+    config_update_req(33),
+    config_update_ans(34),
+    exp_a_req(35),
+    exp_a_ans(36),
+    exp_b_req(37),
+    exp_b_ans(38),
+    path_track_req(101), // draft-ietf-p2psip-diagnostics-09
+    path_track_ans(102), // draft-ietf-p2psip-diagnostics-09
+    error(0xffff),
+    (0..2^16-1)
 } MessageCode; // IANA registry "RELOAD Message Code"
 
 enum {
-	reservedProbeInformation(0),
-	responsible_set(1),
-	num_resources(2),
-	uptime(3),
-	exp-probe(4),
-	(255)
+    invalid(0),
+    responsible_set(1),
+    num_resources(2),
+    uptime(3),
+    exp-probe(4),
+    (255)
 } ProbeInformationType; // IANA registry "RELOAD Probe Information Type Registry"
 
 struct {
-	ProbeInformationType     requested_info<0..2^8-1>;
+    ProbeInformationType     requested_info<0..2^8-1>;
 } ProbeReq;
 
 struct {
-	select (type) {
-		case responsible_set:
-			uint32             responsible_ppb;
+    select (type) {
+        case responsible_set:
+            uint32             responsible_ppb;
 
-		case num_resources:
-			uint32             num_resources;
+        case num_resources:
+            uint32             num_resources;
 
-		case uptime:
-			uint32              uptime;
+        case uptime:
+            uint32              uptime;
 
-	/* This type may be extended */
-	};
+        /* This type may be extended */
+    };
 } ProbeInformationData;
 
 struct {
-	ProbeInformationType    type;
-	uint8                   length;
-	ProbeInformationData    value;
+    ProbeInformationType    type;
+    uint8                   length;
+    ProbeInformationData    value;
 } ProbeInformation;
 
 struct {
-	ProbeInformation        probe_info<0..2^16-1>;
+    ProbeInformation        probe_info<0..2^16-1>;
 } ProbeAns;
 
 enum {
-	reservedAddr(0),
-	ipv4_address (1),
-	ipv6_address (2),
-	(255)
+    invalid(0),
+    ipv4_address (1),
+    ipv6_address (2),
+    (255)
 } AddressType;
 
 struct {
-	uint32                  addr;
-	uint16                  port;
+    uint32                  addr;
+    uint16                  port;
 } IPv4AddrPort;
 
 struct {
-	uint128                 addr;
-	uint16                  port;
+    uint128                 addr;
+    uint16                  port;
 } IPv6AddrPort;
 
 struct {
-	AddressType             type;
-	uint8                   length;
+    AddressType             type;
+    uint8                   length;
 
-	select (type) {
-		case ipv4_address:
-			IPv4AddrPort       v4addr_port;
+    select (type) {
+        case ipv4_address:
+            IPv4AddrPort       v4addr_port;
 
-		case ipv6_address:
-			IPv6AddrPort       v6addr_port;
+        case ipv6_address:
+            IPv6AddrPort       v6addr_port;
 
-	/* This structure can be extended */
-	};
+        /* This structure can be extended */
+    };
 } IpAddressPort;
 
 enum {
-	reservedOverlayLink(0),
-	DTLS-UDP-SR(1),
-	DTLS-UDP-SR-NO-ICE(3),
-	TLS-TCP-FH-NO-ICE(4),
-	EXP_LINK(5),
-	(255)
+    INVALID(0),
+    DTLS-UDP-SR(1),
+    DTLS-UDP-SR-NO-ICE(3),
+    TLS-TCP-FH-NO-ICE(4),
+    EXP_LINK(5),
+    (255)
 } OverlayLinkType; // IANA registry "RELOAD Overlay Link"
 
 enum {
-	reservedCand(0),
-	host(1),
-	srflx(2),
-	prflx(3),
-	relay(4),
-	(255)
+    invalid(0),
+    host(1),
+    srflx(2),
+    prflx(3),
+    relay(4),
+    (255)
 } CandType;
 
 struct {
-	opaque                name<0..2^16-1>; // byte-string (RFC 4566) without SP (see errata #2338)
-	opaque                value<0..2^16-1>; // byte-string (RFC 4566) without SP (see errata #2338)
+    opaque                name<0..2^16-1>; // byte-string (RFC 4566) without SP (see errata #2338)
+    opaque                value<0..2^16-1>; // byte-string (RFC 4566) without SP (see errata #2338)
 } IceExtension;
 
 struct {
-	IpAddressPort         addr_port;
-	OverlayLinkType       overlay_link;
-	opaque                foundation<0..255>; // 1*32ice-char (RFC 5245)
-	uint32                priority;
-	CandType              type;
-	select (type) {
-		case host:
-			;          /* empty */
+    IpAddressPort         addr_port;
+    OverlayLinkType       overlay_link;
+    opaque                foundation<0..255>; // 1*32ice-char (RFC 5245)
+    uint32                priority;
+    CandType              type;
+    select (type) {
+        case host:
+            ;          /* empty */
 
-		case srflx:
-		case prflx:
-		case relay:
-			IpAddressPort     rel_addr_port;
-	};
-	IceExtension          extensions<0..2^16-1>;
+        case srflx:
+        case prflx:
+        case relay:
+            IpAddressPort     rel_addr_port;
+    };
+    IceExtension          extensions<0..2^16-1>;
 } IceCandidate;
 
 enum {
-	false(0),
-	true(1),
-	(255)
+    false(0),
+    true(1),
+    (255)
 } Boolean;
 
 struct {
-	opaque                ufrag<0..2^8-1>;
-	opaque                password<0..2^8-1>;
-	opaque                role<0..2^8-1>;
-	IceCandidate          candidates<0..2^16-1>;
-	Boolean               send_update;
+    opaque                ufrag<0..2^8-1>;
+    opaque                password<0..2^8-1>;
+    opaque                role<0..2^8-1>;
+    IceCandidate          candidates<0..2^16-1>;
+    Boolean               send_update;
 } AttachReqAns;
 
 enum {
-	INVALID(0),
-	SIP-REGISTRATION(1), // draft-ietf-p2psip-sip-06
-	TURN-SERVICE(2),
-	CERTIFICATE_BY_NODE(3),
-	RESERVED_ROUTING_TABLE_SIZE(4),
-	RESERVED_SOFTWARE_VERSION(5),
-	RESERVED_MACHINE_UPTIME(6),
-	RESERVED_APP_UPTIME(7),
-	RESERVED_MEMORY_FOOTPRINT(8),
-	RESERVED_DATASIZE_STORED(9),
-	RESERVED_INSTANCES_STORED(10),
-	RESERVED_MESSAGES_SENT_RCVD(11),
-	RESERVED_EWMA_BYTES_SENT(12),
-	RESERVED_EWMA_BYTES_RCVD(13),
-	RESERVED_LAST_CONTACT(14),
-	RESERVED_RTT(15),
-	CERTIFICATE_BY_USER(16),
-	REDIR(104), // draft-p2psip-service-discovery-04
-	(0..2^32-1)
+    INVALID(0),
+    SIP-REGISTRATION(1), // draft-ietf-p2psip-sip-08
+    TURN-SERVICE(2),
+    CERTIFICATE_BY_NODE(3),
+    RESERVED_ROUTING_TABLE_SIZE(4),
+    RESERVED_SOFTWARE_VERSION(5),
+    RESERVED_MACHINE_UPTIME(6),
+    RESERVED_APP_UPTIME(7),
+    RESERVED_MEMORY_FOOTPRINT(8),
+    RESERVED_DATASIZE_STORED(9),
+    RESERVED_INSTANCES_STORED(10),
+    RESERVED_MESSAGES_SENT_RCVD(11),
+    RESERVED_EWMA_BYTES_SENT(12),
+    RESERVED_EWMA_BYTES_RCVD(13),
+    RESERVED_LAST_CONTACT(14),
+    RESERVED_RTT(15),
+    CERTIFICATE_BY_USER(16),
+    REDIR(104), // draft-p2psip-service-discovery-06
+    ACCESS-CONTROL-LIST(105), // draft-ietf-p2psip-share-00
+    DISCO-REGISTRATION(106), // draft-ietf-p2psip-disco-00
+    (0..2^32-1)
 } KindId; // IANA registry "RELOAD Data Kind-ID"
 
 struct {
-	uint8                   iteration;
-	IpAddressPort           server_address;
+    uint8                   iteration;
+    IpAddressPort           server_address;
 } TurnServer;
 
 enum {
-	sip_registration_uri(1),
-	sip_registration_route(2),
-	(255)
-} SipRegistrationType; // draft-ietf-p2psip-sip-06
+    sip_registration_uri(1),
+    sip_registration_route(2),
+    (255)
+} SipRegistrationType; // draft-ietf-p2psip-sip-08
 
 select (SipRegistration.type) {
-	case sip_registration_uri:
-		opaque               uri<0..2^16-1>;
+    case sip_registration_uri:
+        opaque               uri<0..2^16-1>;
 
-	case sip_registration_route:
-		opaque               contact_prefs<0..2^16-1>; // probably RFC 3840 or RFC 2533
-		Destination          destination_list<0..2^16-1>;
+    case sip_registration_route:
+        opaque               contact_prefs<0..2^16-1>; // RFC 2533
+        Destination          destination_list<0..2^16-1>;
 
-	/* This type can be extended */
-} SipRegistrationData; // draft-ietf-p2psip-sip-06
+    /* This type can be extended */
+} SipRegistrationData; // draft-ietf-p2psip-sip-08
 
 struct {
-	SipRegistrationType   type;
-	uint16                length;
-	SipRegistrationData   data;
-} SipRegistration; // draft-ietf-p2psip-sip-06
+    SipRegistrationType   type;
+    uint16                length;
+    SipRegistrationData   data;
+} SipRegistration; // draft-ietf-p2psip-sip-08
 
 enum {
     none(0),
     (255)
-} RedirServiceProviderExtType; // draft-p2psip-service-discovery-04
+} RedirServiceProviderExtType; // draft-p2psip-service-discovery-06
 
 struct {
     RedirServiceProviderExtType	type;
-	NodeId                      serviceProvider;
-	opaque                      namespace<0..2^16-1>;
-	uint16                      level;
-	uint16                      node;
-	uint16                      length;
+    Destination                 destination_list<0..2^16-1>;
+    opaque                      namespace<0..2^16-1>;
+    uint16                      level;
+    uint16                      node;
+    uint16                      length;
 
     select (type) {
-        /* This type can be extended */
-	} extension;
-} RedirServiceProvider; // draft-p2psip-service-discovery-04
+    /* This type can be extended */
+    } extension;
+} RedirServiceProvider; // draft-p2psip-service-discovery-06
 
 struct {
-	Boolean                exists;
-	uint32                 length;
-	select (kind) {
-		case TURN_SERVICE:
-			TurnServer     turn_server;
+    Boolean                exists;
+    uint32                 length;
+    select (kind) {
+        case TURN_SERVICE:
+            TurnServer     turn_server;
 
-		case SIP-REGISTRATION: // draft-ietf-p2psip-sip-06
-			SipRegistration sip_registration;
+        case SIP-REGISTRATION: // draft-ietf-p2psip-sip-08
+            SipRegistration sip_registration;
 
-		case CERTIFICATE_BY_NODE:
-		case CERTIFICATE_BY_USER:
-			opaque          certificate[length];
+        case CERTIFICATE_BY_NODE:
+        case CERTIFICATE_BY_USER:
+            opaque          certificate[length];
 
-		case REDIR: // draft-p2psip-service-discovery-04
-			RedirServiceProvider redir;
+        case REDIR: // draft-p2psip-service-discovery-06
+            RedirServiceProvider redir;
 
-	/* This structure may be extended */
-	};
+        case ACCESS-CONTROL-LIST:
+            AccessControlListItem access_control; // draft-ietf-p2psip-share-00
+
+        case DISCO-REGISTRATION:
+            DisCoRegistration disco_registration; // draft-ietf-p2psip-disco-00
+
+        /* This structure may be extended */
+    };
 } DataValue;
 
 struct {
-	uint32                  index;
-	DataValue               value;
+    uint32                  index;
+    DataValue               value;
 } ArrayEntry;
 
 typedef opaque           DictionaryKey<0..2^16-1>;
 
 struct {
-	DictionaryKey          key;
-	DataValue              value;
+    DictionaryKey          key;
+    DataValue              value;
 } DictionaryEntry;
 
 struct {
-	select (dataModel) {  // Derived from KindId. IANA registry "RELOAD Data Model"
-		case single_value:
-			DataValue             single_value_entry;
+    select (dataModel) {  // Derived from KindId. IANA registry "RELOAD Data Model"
+        case single_value:
+            DataValue             single_value_entry;
 
-		case array:
-			ArrayEntry            array_entry;
+        case array:
+            ArrayEntry            array_entry;
 
-		case dictionary:
-			DictionaryEntry       dictionary_entry;
+        case dictionary:
+            DictionaryEntry       dictionary_entry;
 
-	/* This structure may be extended */
-	};
+        /* This structure may be extended */
+    };
 } StoredDataValue;
 
 enum {
-	reservedSignerIdentity(0),
-	cert_hash(1),
-	cert_hash_node_id(2),
-	none(3),
-	(255)
+    invalid(0),
+    cert_hash(1),
+    cert_hash_node_id(2),
+    none(3),
+    (255)
 } SignerIdentityType;
 
 enum {
-	none(0),
-	md5(1),
-	sha1(2),
-	sha224(3),
-	sha256(4),
-	sha384(5),
-	sha512(6),
-	(255)
+    none(0),
+    md5(1),
+    sha1(2),
+    sha224(3),
+    sha256(4),
+    sha384(5),
+    sha512(6),
+    (255)
 } HashAlgorithm; // RFC 5246. IANA registry "TLS HashAlgorithm"
 
 struct {
-	select (identity_type) {
-		case cert_hash:
-			HashAlgorithm      hash_alg;              // From TLS
-			opaque             certificate_hash<0..2^8-1>;
+    select (identity_type) {
+        case cert_hash:
+            HashAlgorithm      hash_alg;              // From TLS
+            opaque             certificate_hash<0..2^8-1>;
 
-		case cert_hash_node_id:
-			HashAlgorithm      hash_alg;              // From TLS
-			opaque             certificate_node_id_hash<0..2^8-1>;
+        case cert_hash_node_id:
+            HashAlgorithm      hash_alg;              // From TLS
+            opaque             certificate_node_id_hash<0..2^8-1>;
 
-		case none:
-			; /* empty */
+        case none:
+            ; /* empty */
 
-		/* This structure may be extended with new types if necessary*/
-	};
+        /* This structure may be extended with new types if necessary*/
+    };
 } SignerIdentityValue;
 
 struct {
-	SignerIdentityType     identity_type;
-	uint16                 length;
-	SignerIdentityValue    identity[SignerIdentity.length];
+    SignerIdentityType     identity_type;
+    uint16                 length;
+    SignerIdentityValue    identity[SignerIdentity.length];
 } SignerIdentity;
 
 enum {
-	anonymous(0),
-	rsa(1),
-	dsa(2),
-	ecdsa(3),
-	(255)
+    anonymous(0),
+    rsa(1),
+    dsa(2),
+    ecdsa(3),
+    (255)
 } SignatureAlgorithm; // RFC 5246. IANA registry "TLS SignatureAlgorithm"
 
 struct {
-	HashAlgorithm hash;
-	SignatureAlgorithm signature;
+    HashAlgorithm hash;
+    SignatureAlgorithm signature;
 } SignatureAndHashAlgorithm; // RFC 5246
 
 struct {
-	SignatureAndHashAlgorithm     algorithm;   // From TLS
-	SignerIdentity                identity;
-	opaque                        signature_value<0..2^16-1>;
+    SignatureAndHashAlgorithm     algorithm;   // From TLS
+    SignerIdentity                identity;
+    opaque                        signature_value<0..2^16-1>;
 } Signature;
 
 struct {
-	uint32                  length;
-	uint64                  storage_time; // Number of millisecods since Jan 1, 1970 UTC, no leap seconds
-	uint32                  lifetime; // remaining in seconds, from the time stored or retrieved
-	StoredDataValue         value;
-	Signature               signature;
+    uint32                  length;
+    uint64                  storage_time; // Number of milliseconds since Jan 1, 1970 UTC, no leap seconds
+    uint32                  lifetime; // remaining in seconds, from the time stored or retrieved
+    StoredDataValue         value;
+    Signature               signature;
 } StoredData;
 
 struct {
-	KindId                 kind;
-	uint64                 generation_counter; // 0 = do not check
-	StoredData             values<0..2^32-1>;
+    KindId                 kind;
+    uint64                 generation_counter; // 0 = do not check
+    StoredData             values<0..2^32-1>;
 } StoreKindData;
 
 struct {
-	ResourceId             resource;
-	uint8                  replica_number; // 0 = original storage
-	StoreKindData          kind_data<0..2^32-1>;
+    ResourceId             resource;
+    uint8                  replica_number; // 0 = original storage
+    StoreKindData          kind_data<0..2^32-1>;
 } StoreReq;
 
 struct {
-	KindId                  kind;
-	uint64                  generation_counter; // 0 never happen
-	NodeId                  replicas<0..2^16-1>;
+    KindId                  kind;
+    uint64                  generation_counter; // 0 never happen
+    NodeId                  replicas<0..2^16-1>;
 } StoreKindResponse;
 
 struct {
-	StoreKindResponse       kind_responses<0..2^16-1>;
+    StoreKindResponse       kind_responses<0..2^16-1>;
 } StoreAns;
 
 struct {
-	int32            first;
-	int32            last; // last always > first. Do not retrieve last.
+    int32            first;
+    int32            last; // last always > first. Do not retrieve last.
 } ArrayRange;
 
 struct {
-	KindId                  kind;
-	uint64                  generation;
-	uint16                  length;
+    KindId                  kind;
+    uint64                  generation;
+    uint16                  length;
 
-	select (dataModel) {
-		case single_value:
-			; /* empty */
+    select (dataModel) {
+        case single_value:
+            ; /* empty */
 
-		case array:
-			ArrayRange       indices<0..2^16-1>; // never overlap
+        case array:
+            ArrayRange       indices<0..2^16-1>; // never overlap
 
-		case dictionary:
-			DictionaryKey    keys<0..2^16-1>;
+        case dictionary:
+            DictionaryKey    keys<0..2^16-1>;
 
-		/* This structure may be extended */
-	};
+        /* This structure may be extended */
+    };
 } StoredDataSpecifier;
 
 struct {
-	ResourceId              resource;
-	StoredDataSpecifier     specifiers<0..2^16-1>;
+    ResourceId              resource;
+    StoredDataSpecifier     specifiers<0..2^16-1>;
 } FetchReq;
 
 struct {
-	KindId                 kind;
-	uint64                 generation; // never 0
-	StoredData             values<0..2^32-1>;
+    KindId                 kind;
+    uint64                 generation; // never 0
+    StoredData             values<0..2^32-1>;
 } FetchKindResponse;
 
 struct {
-	FetchKindResponse      kind_responses<0..2^32-1>;
+    FetchKindResponse      kind_responses<0..2^32-1>;
 } FetchAns;
 
 struct {
-	ResourceId                 resource;
-	KindId                     kinds<0..2^8-1>;
+    ResourceId                 resource;
+    KindId                     kinds<0..2^8-1>;
 } FindReq;
 
 struct {
-	KindId                      kind;
-	ResourceId                  closest;
+    KindId                      kind;
+    ResourceId                  closest;
 } FindKindData;
 
 struct {
-	FindKindData                results<0..2^16-1>;
+    FindKindData                results<0..2^16-1>;
 } FindAns;
 
 struct {
-	NodeId                joining_peer_id;
-	uint16                length;
-	select (TopologyPlugin) { // TopologyPlugin defined in configuration file
-		/* This structure may be extended with new types if necessary*/
-	};
+    NodeId                joining_peer_id;
+    uint16                length;
+    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    /* This structure may be extended with new types if necessary */
+    };
 } JoinReq;
 
 struct {
-	uint16                length;
-	select (TopologyPlugin) { // TopologyPlugin defined in configuration file
-		/* This structure may be extended with new types if necessary*/
-	};
+    uint16                length;
+    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    /* This structure may be extended with new types if necessary */
+    };
 } JoinAns;
 
 enum {
-	reserved(0),
-	from_succ(1),
-	from_pred(2),
-	(255)
+    invalid(0),
+    from_succ(1),
+    from_pred(2),
+    (255)
 } ChordLeaveType;
 
 struct {
-	ChordLeaveType         type;
-	select (type) {
-		case from_succ:
-			NodeId              successors<0..2^16-1>;
+    ChordLeaveType         type;
+    select (type) {
+        case from_succ:
+            NodeId              successors<0..2^16-1>;
 
-		case from_pred:
-			NodeId              predecessors<0..2^16-1>;
-	};
+        case from_pred:
+            NodeId              predecessors<0..2^16-1>;
+    };
 } ChordLeaveData;
 
 struct {
-	NodeId                leaving_peer_id;
-	uint16                length;
-	select (TopologyPlugin) { // TopologyPlugin defined in configuration file
-		case CHORD-RELOAD:
-			ChordLeaveData leave_data;
+    NodeId                leaving_peer_id;
+    uint16                length;
+    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+        case CHORD-RELOAD:
+            ChordLeaveData leave_data;
 
-		/* This structure may be extended with new types if necessary*/
-	};
+        /* This structure may be extended with new types if necessary */
+    };
 } LeaveReq;
 
 enum {
-	reserved(0),
-	peer_ready(1),
-	neighbors(2),
-	full(3),
-	(255)
+    invalid(0),
+    peer_ready(1),
+    neighbors(2),
+    full(3),
+    (255)
 } ChordUpdateType;
 
 struct {
-	uint32                  uptime;
-	ChordUpdateType         type;
-	select (type) {
-		case peer_ready:
-			; /* empty */
+    uint32                  uptime;
+    ChordUpdateType         type;
+    select (type) {
+        case peer_ready:
+            ; /* empty */
 
-		case neighbors:
-			NodeId              predecessors<0..2^16-1>;
-			NodeId              successors<0..2^16-1>;
+        case neighbors:
+            NodeId              predecessors<0..2^16-1>;
+            NodeId              successors<0..2^16-1>;
 
-		case full:
-			NodeId              predecessors<0..2^16-1>;
-			NodeId              successors<0..2^16-1>;
-			NodeId              fingers<0..2^16-1>;
-	};
+        case full:
+            NodeId              predecessors<0..2^16-1>;
+            NodeId              successors<0..2^16-1>;
+            NodeId              fingers<0..2^16-1>;
+    };
 } ChordUpdate;
 
 struct {
-	Boolean                send_update;
-	Destination            destination;
-	uint16                length;
-	select (TopologyPlugin) { // TopologyPlugin defined in configuration file
-		/* This structure may be extended with new types if necessary*/
-	};
+    Boolean                send_update;
+    Destination            destination;
+    uint16                length;
+    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    /* This structure may be extended with new types if necessary */
+    };
 } RouteQueryReq;
 
 struct {
-	NodeId                  next_peer;
+    NodeId                  next_peer;
 } ChordRouteQueryAns;
 
 struct {
-	opaque<0..2^16-1> padding; // filled with 0
+    opaque<0..2^16-1> padding; // filled with 0
 } PingReq;
 
 struct {
-	uint64                 response_id; // ???
-	uint64                 time;
+    uint64                 response_id; // ???
+    uint64                 time;
 } PingAns;
 
 struct {
-	ResourceId              resource;
-	StoredDataSpecifier     specifiers<0..2^16-1>;
+    ResourceId              resource;
+    StoredDataSpecifier     specifiers<0..2^16-1>;
 } StatReq;
 
 struct {
-	Boolean                exists;
-	uint32                 value_length;
-	HashAlgorithm          hash_algorithm;
-	opaque                 hash_value<0..255>; // I think it's hash(byte[0]) if empty (i.e. da39a3ee5e6b4b0d3255bfef95601890afd80709 for SHA-1)
+    Boolean                exists;
+    uint32                 value_length;
+    HashAlgorithm          hash_algorithm;
+    opaque                 hash_value<0..255>;
 } MetaData;
 
 struct {
-	uint32                 index;
-	MetaData               value;
+    uint32                 index;
+    MetaData               value;
 } ArrayEntryMeta;
 
 struct {
-	DictionaryKey          key;
-	MetaData               value;
+    DictionaryKey          key;
+    MetaData               value;
 } DictionaryEntryMeta;
 
 struct {
-	select (dataModel) {
-		case single_value:
-			MetaData              single_value_entry;
+    select (dataModel) {
+        case single_value:
+            MetaData              single_value_entry;
 
-		case array:
-			ArrayEntryMeta        array_entry;
+        case array:
+            ArrayEntryMeta        array_entry;
 
-		case dictionary:
-			DictionaryEntryMeta   dictionary_entry;
+        case dictionary:
+            DictionaryEntryMeta   dictionary_entry;
 
-		/* This structure may be extended */
-	};
+        /* This structure may be extended */
+    };
 } MetaDataValue;
 
 struct {
-	uint32                  value_length;
-	uint64                  storage_time;
-	uint32                  lifetime;
-	MetaDataValue           metadata;
+    uint32                  value_length;
+    uint64                  storage_time;
+    uint32                  lifetime;
+    MetaDataValue           metadata;
 } StoredMetaData;
 
 struct {
-	KindId                 kind;
-	uint64                 generation;
-	StoredMetaData         values<0..2^32-1>;
+    KindId                 kind;
+    uint64                 generation;
+    StoredMetaData         values<0..2^32-1>;
 } StatKindResponse;
 
 struct {
-	StatKindResponse      kind_responses<0..2^32-1>;
+    StatKindResponse      kind_responses<0..2^32-1>;
 } StatAns;
 
 struct {
-	opaque                  ufrag<0..2^8-1>;
-	opaque                  password<0..2^8-1>;
-	uint16                  application; // IANA registry "RELOAD Application-ID"
-	opaque                  role<0..2^8-1>;
-	IceCandidate            candidates<0..2^16-1>;
+    opaque                  ufrag<0..2^8-1>;
+    opaque                  password<0..2^8-1>;
+    uint16                  application; // IANA registry "RELOAD Application-ID"
+    opaque                  role<0..2^8-1>;
+    IceCandidate            candidates<0..2^16-1>;
 } AppAttachReq;
 
 struct {
-	opaque                  ufrag<0..2^8-1>;
-	opaque                  password<0..2^8-1>;
-	uint16                  application; // IANA registry "RELOAD Application-ID"
-	opaque                  role<0..2^8-1>;
-	IceCandidate            candidates<0..2^16-1>;
+    opaque                  ufrag<0..2^8-1>;
+    opaque                  password<0..2^8-1>;
+    uint16                  application; // IANA registry "RELOAD Application-ID"
+    opaque                  role<0..2^8-1>;
+    IceCandidate            candidates<0..2^16-1>;
 } AppAttachAns; // Same than AppAttachReq
 
 enum {
-	reservedConfigUpdate(0),
-	config(1),
-	kind(2),
-	(255)
+    invalid(0),
+    config(1),
+    kind(2),
+    (255)
 } ConfigUpdateType;
 
 typedef opaque           KindDescription<0..2^16-1>;
 
 struct {
-	ConfigUpdateType       type;
-	uint32                 length;
+    ConfigUpdateType       type;
+    uint32                 length;
 
-	select (type) {
-		case config:
-			opaque             config_data<0..2^24-1>;
+    select (type) {
+        case config:
+            opaque             config_data<0..2^24-1>;
 
-		case kind:
-			KindDescription    kinds<0..2^24-1>;
+        case kind:
+            KindDescription    kinds<0..2^24-1>;
 
-		/* This structure may be extended with new types */
-	};
+        /* This structure may be extended with new types */
+    };
 } ConfigUpdateReq;
 
 struct {
 } ConfigUpdateAns;
 
 enum {
-	reservedMessagesExtension(0),
-	exp-ext(1),
-	Diagnostic_Ping(2), // draft-ietf-p2psip-diagnostics-07
-	self_tuning_data(3), // draft-ietf-p2psip-self-tuning-04.  Currently 1!
-	(2^16-1)
+    invalid(0),
+    exp-ext(1),
+    Diagnostic_Ping(2), // draft-ietf-p2psip-diagnostics-09
+    self_tuning_data(3), // draft-ietf-p2psip-self-tuning-06.  Currently 1!
+    (2^16-1)
 } MessageExtensionType; // IANA registry "RELOAD Extensions Registry"
 
 struct {
-	uint32                   network_size;
-	uint32                   join_rate;
-	uint32                   leave_rate;
-} SelfTuningData; // draft-ietf-p2psip-self-tuning-04
+    uint32                   network_size;
+    uint32                   join_rate;
+    uint32                   leave_rate;
+} SelfTuningData; // draft-ietf-p2psip-self-tuning-06
 
 enum {
-	(2^16-1)
-} DiagnosticExtensionRequestType; // draft-ietf-p2psip-diagnostics-07
+    (2^16-1)
+} DiagnosticExtensionRequestType; // draft-ietf-p2psip-diagnostics-09
 
 struct {
-	DiagnosticExtensionRequestType type;
-	opaque diagnostic_extension_contents<0..2^32-1>;
-} DiagnosticExtension; // draft-ietf-p2psip-diagnostics-07
+    DiagnosticExtensionRequestType type;
+    opaque diagnostic_extension_contents<0..2^32-1>;
+} DiagnosticExtension; // draft-ietf-p2psip-diagnostics-09
 
 struct {
-	uint64 expiration;
-	uint64 timestamp_initiated;
-	// dMFlags 0: reserved always 0
-	// dMFlags 1: STATUS_INFO
-	// dMFlags 2: ROUTING_TABLE_SIZE
-	// dMFlags 3: PROCESS_POWER
-	// dMFlags 4: BANDWIDTH
-	// dMFlags 5: SOFTWARE_VERSION
-	// dMFlags 6: MACHINE_UPTIME
-	// dMFlags 7: APP_UPTIME
-	// dMFlags 8: MEMORY_FOOTPRINT
-	// dMFlags 9: DATASIZE_STORED
-	// dMFlags 10: INSTANCES_STORED
-	// dMFlags 11: MESSAGES_SENT_RCVD
-	// dMFlags 12: EWMA_BYTES_SENT
-	// dMFlags 13: EWMA_BYTES_RCVD
-	// dMFlags 14: UNDERLAY_HOP
-	// dMFlags 15: BATTERY_STATUS
-	// dMFlags 16-62: unused - 0
-	// dMFlags 63: reserved always 0
-	uint64 dMFlags;
-	DiagnosticExtension diagnostic_extensions<0..2^32-1>; // Different from spec.
-	}
-} DiagnosticsRequest; // draft-ietf-p2psip-diagnostics-07
+    uint64 expiration;
+    uint64 timestamp_initiated;
+    // dMFlags 0: reserved always 0
+    // dMFlags 1: STATUS_INFO
+    // dMFlags 2: ROUTING_TABLE_SIZE
+    // dMFlags 3: PROCESS_POWER
+    // dMFlags 4: BANDWIDTH
+    // dMFlags 5: SOFTWARE_VERSION
+    // dMFlags 6: MACHINE_UPTIME
+    // dMFlags 7: APP_UPTIME
+    // dMFlags 8: MEMORY_FOOTPRINT
+    // dMFlags 9: DATASIZE_STORED
+    // dMFlags 10: INSTANCES_STORED
+    // dMFlags 11: MESSAGES_SENT_RCVD
+    // dMFlags 12: EWMA_BYTES_SENT
+    // dMFlags 13: EWMA_BYTES_RCVD
+    // dMFlags 14: UNDERLAY_HOP
+    // dMFlags 15: BATTERY_STATUS
+    // dMFlags 16-62: unused - 0
+    // dMFlags 63: reserved always 0
+    uint64 dMFlags;
+    DiagnosticExtension diagnostic_extensions<0..2^32-1>; // Different from spec.
+}
+} DiagnosticsRequest; // draft-ietf-p2psip-diagnostics-09
 
 struct {
-	Destination destination;
-	DiagnosticsRequest request; // Was DiagnosticRequest
-} PathTrackReq;	 // draft-ietf-p2psip-diagnostics-07
+    Destination destination;
+    DiagnosticsRequest request; // Was DiagnosticRequest
+} PathTrackReq;	 // draft-ietf-p2psip-diagnostics-09
 
 enum { // Different from spec
-	reserved_0(0x0000),
-	STATUS_INFO(0x0001),
-	ROUTING_TABLE_SIZE(0x0002),
-	PROCESS_POWER(0x0003),
-	BANDWIDTH(0x0004),
-	SOFTWARE_VERSION(0x0005),
-	MACHINE_UPTIME(0x0006),
-	APP_UPTIME(0x0007),
-	MEMORY_FOOTPRINT(0x0008),
-	DATASIZE_STORED(0x0009),
-	INSTANCES_STORED(0x000A),
-	MESSAGES_SENT_RCVD(0x000B),
-	EWMA_BYTES_SENT(0x000C),
-	EWMA_BYTES_RCVD(0x000D),
-	UNDERLAY_HOP(0x000E),
-	BATTERY_STATUS(0x000F),
-	reserved_63(0x003F),
-	(2^16-1)
-} DiagnosticKindId; // draft-ietf-p2psip-diagnostics-07
+    reserved_0(0x0000),
+    STATUS_INFO(0x0001),
+    ROUTING_TABLE_SIZE(0x0002),
+    PROCESS_POWER(0x0003),
+    BANDWIDTH(0x0004),
+    SOFTWARE_VERSION(0x0005),
+    MACHINE_UPTIME(0x0006),
+    APP_UPTIME(0x0007),
+    MEMORY_FOOTPRINT(0x0008),
+    DATASIZE_STORED(0x0009),
+    INSTANCES_STORED(0x000A),
+    MESSAGES_SENT_RCVD(0x000B),
+    EWMA_BYTES_SENT(0x000C),
+    EWMA_BYTES_RCVD(0x000D),
+    UNDERLAY_HOP(0x000E),
+    BATTERY_STATUS(0x000F),
+    reserved_63(0x003F),
+    local_user(0xfffe),
+    reserver_65535(0xffff),
+    (2^16-1)
+} DiagnosticKindId; // draft-ietf-p2psip-diagnostics-09
 
 struct {
-	DiagnosticKindId kind;
-	uint16 length;
-	select (kind) {
-		case STATUS_INFO:
-			uint8  congestion_status; // undefined
+    DiagnosticKindId kind;
+    uint16 length;
+    select (kind) {
+        case STATUS_INFO:
+            uint8  congestion_status; // 0x00 = 0 load; 0x0F=congested; other reserved
 
-		case ROUTING_TABLE_SIZE:
-			uint32 number_peers;
+        case ROUTING_TABLE_SIZE:
+            uint32 number_peers;
 
-		case PROCESS_POWER:
-			uint32 processing_power; // in MIPS
+        case PROCESS_POWER:
+            uint32 processing_power; // in MIPS
 
-		case BANDWIDTH:
-			uint32 bandwidth; // in Kbps
+        case BANDWIDTH:
+            uint32 bandwidth; // in Kbps
 
-		case SOFTWARE_VERSION:
-			opaque[length] software_version; // ASCII encoding
+        case SOFTWARE_VERSION:
+            opaque[length] software_version; // ASCII encoding, format = HTTP User-Agent/Server
 
-		case MACHINE_UPTIME:
-			uint64 machine_uptime; // in seconds
+        case MACHINE_UPTIME:
+            uint64 machine_uptime; // in seconds
 
-		case APP_UPTIME:
-			uint64 app_uptime; // in seconds
+        case APP_UPTIME:
+            uint64 app_uptime; // in seconds
 
-		case MEMORY_FOOTPRINT:
-			uint32 memory_footprint; // in kibibyte
+        case MEMORY_FOOTPRINT:
+            uint32 memory_footprint; // in kibibyte
 
-		case DATASIZE_STORED:
-			uint64 datasize_stored; // in bytes
+        case DATASIZE_STORED:
+            uint64 datasize_stored; // in bytes
 
-		case INSTANCES_STORED:
-			struct {
-				KindId kind;
-				uint64 instances;
-			}[length];
+        case INSTANCES_STORED:
+            struct {
+                KindId kind;
+                uint64 instances;
+            }[length];
 
-		case MESSAGES_SENT_RCVD:
-			struct {
-				MessageCode message_code;
-				uint64 sent;
-				uint64 received;
-			}[length];
+        case MESSAGES_SENT_RCVD:
+            struct {
+                MessageCode message_code;
+                uint64 sent;
+                uint64 received;
+            }[length];
 
-		case EWMA_BYTES_SENT:
-			uint32 ewma_bytes_sent;
+        case EWMA_BYTES_SENT:
+            uint32 ewma_bytes_sent;
 
-		case EWMA_BYTES_RCVD:
-			uint32 ewma_bytes_received;
+        case EWMA_BYTES_RCVD:
+            uint32 ewma_bytes_received;
 
-		case UNDERLAY_HOP:
-			uint8 hops;
+        case UNDERLAY_HOP:
+            uint8 hops;
 
-		case BATTERY_STATUS:
-			// battery_status 7: battery power =0
-			// battery_status 0-6: reserved (0)
-			uint8 battery_status;
+        case BATTERY_STATUS:
+            // battery_status 7: battery power =0
+            // battery_status 0-6: reserved (0)
+            uint8 battery_status;
 
-		/* This structure may be extended with new types*/
-	};
-	opaque diagnostic_info_contents<0..2^16-1>;
-} DiagnosticInfo; // draft-ietf-p2psip-diagnostics-07
-
-struct {
-	uint64 expiration;
-	uint64 timestamp_received;
-	uint8 hop_counter;
-	DiagnosticInfo diagnostic_info_list<0..2^32-1>;
-} DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-07
+        /* This structure may be extended with new types*/
+    };
+    opaque diagnostic_info_contents<0..2^16-1>;
+} DiagnosticInfo; // draft-ietf-p2psip-diagnostics-09
 
 struct {
-	Destination next_hop;
-	DiagnosticResponse response;
-} PathTrackAns; // draft-ietf-p2psip-diagnostics-07
+    uint64 expiration;
+    uint64 timestamp_received;
+    uint8 hop_counter;
+    DiagnosticInfo diagnostic_info_list<0..2^32-1>;
+} DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-09
+
+struct {
+    Destination next_hop;
+    DiagnosticResponse response;
+} PathTrackAns; // draft-ietf-p2psip-diagnostics-09
+
 
 enum {
-	invalid(0),
-	Unused(1),
-	Error_Forbidden(2),
-	Error_Not_Found(3),
-	Error_Request_Timeout(4),
-	Error_Generation_Counter_Too_Low(5),
-	Error_Incompatible_with_Overlay(6),
-	Error_Unsupported_Forwarding_Option(7),
-	Error_Data_Too_Large(8),
-	Error_Data_Too_Old(9),
-	Error_TTL_Exceeded(10),
-	Error_Message_Too_Large(11),
-	Error_Unknown_Kind(12),
-	Error_Unknown_Extension(13),
-	Error_Response_Too_Large(14),
-	Error_Config_Too_Old(15),
-	Error_Config_Too_New(16),
-	Error_In_Progress(17),
-	Error_Exp_A(18),
-	Error_Exp_B(19),
-	Error_Underlay_Destination_Unreachable(101), // draft-ietf-p2psip-diagnostics-07
-	Error_Underlay_Time_Exceeded(102), // draft-ietf-p2psip-diagnostics-07
-	Error_Message_Expired(103), // draft-ietf-p2psip-diagnostics-07
-	Error_Upstream_Misrouting(104), // draft-ietf-p2psip-diagnostics-07
-	Error_Loop_Detected(105), // draft-ietf-p2psip-diagnostics-07
-	Error_TTL_Hops_Exceeded(106), // draft-ietf-p2psip-diagnostics-07
-	(0..2^16-1)
+    pattern(1),
+    (255)
+} ResourceNameType; // draft-ietf-p2psip-share-00
+
+struct {
+    ResourceNameType type;
+    uint16 length;
+    select (type) {
+        case pattern:
+            opaque resource_name<0..2^16-1>;
+
+        /* Types can be extended */
+    }
+} ResourceNameExtension; // draft-ietf-p2psip-share-00
+
+struct {
+    ResourceNameExtension res_name_ext;
+    opaque to_user<0..2^16-1>;
+    KindId kind;
+    Boolean allow_delegation;
+} AccessControlListItem; // draft-ietf-p2psip-share-00
+
+struct {
+    ResourceNameExtension res_name_ext;
+    opaque coordinate<0..2^16-1>;
+    NodeId node_id;
+} DisCoRegistration; // draft-ietf-p2psip-disco-00
+
+enum {
+    invalid(0),
+    Unused(1),
+    Error_Forbidden(2),
+    Error_Not_Found(3),
+    Error_Request_Timeout(4),
+    Error_Generation_Counter_Too_Low(5),
+    Error_Incompatible_with_Overlay(6),
+    Error_Unsupported_Forwarding_Option(7),
+    Error_Data_Too_Large(8),
+    Error_Data_Too_Old(9),
+    Error_TTL_Exceeded(10),
+    Error_Message_Too_Large(11),
+    Error_Unknown_Kind(12),
+    Error_Unknown_Extension(13),
+    Error_Response_Too_Large(14),
+    Error_Config_Too_Old(15),
+    Error_Config_Too_New(16),
+    Error_In_Progress(17),
+    Error_Exp_A(18),
+    Error_Exp_B(19),
+    Error_Underlay_Destination_Unreachable(101), // draft-ietf-p2psip-diagnostics-09
+    Error_Underlay_Time_Exceeded(102), // draft-ietf-p2psip-diagnostics-09
+    Error_Message_Expired(103), // draft-ietf-p2psip-diagnostics-09
+    Error_Upstream_Misrouting(104), // draft-ietf-p2psip-diagnostics-09
+    Error_Loop_Detected(105), // draft-ietf-p2psip-diagnostics-09
+    Error_TTL_Hops_Exceeded(106), // draft-ietf-p2psip-diagnostics-09
+    (0..2^16-1)
 } ErrorCode; // IANA registry "RELOAD Error Code"
 
 struct {
-	ErrorCode          error_code;
-	uint16             length;
-	select (error_code) {
-		case Error_Generation_Counter_Too_Low:
-			StoreAns   store_ans;
+    ErrorCode          error_code;
+    uint16             length;
+    select (error_code) {
+        case Error_Generation_Counter_Too_Low:
+            StoreAns   store_ans;
 
-		case Error_Unknown_Kind:
-			KindId     unknown_kinds<0..2^8-1>;
+        case Error_Unknown_Kind:
+            KindId     unknown_kinds<0..2^8-1>;
 
-		case Error_Forbidden:
-		case Error_Not_Found:
-		case Error_Request_Timeout:
-		case Error_Incompatible_with_Overlay:
-		case Error_Unsupported_Forwarding_Option:
-		case Error_Data_Too_Large:
-		case Error_Data_Too_Old:
-		case Error_TTL_Exceeded:
-		case Error_Message_Too_Large:
-		case Error_Unknown_Extension:
-		case Error_Response_Too_Large:
-		case Error_Config_Too_Old:
-		case Error_Config_Too_New:
-		case Error_In_Progress:
-		case Error_Underlay_Destination_Unreachable: // draft-ietf-p2psip-diagnostics-07
-			// "net unreachable" padded with 0
-			// "host unreachable" padded with 0
-			// "protocol unreachable" padded with 0
-			// "port unreachable" padded with 0
-			// "fragmentation needed" padded with 0
-			// "source route failed" padded with 0
-			opaque[length] error_info; // UTF-8 character string
+        case Error_Forbidden:
+        case Error_Not_Found:
+        case Error_Request_Timeout:
+        case Error_Incompatible_with_Overlay:
+        case Error_Unsupported_Forwarding_Option:
+        case Error_Data_Too_Large:
+        case Error_Data_Too_Old:
+        case Error_TTL_Exceeded:
+        case Error_Message_Too_Large:
+        case Error_Unknown_Extension:
+        case Error_Response_Too_Large:
+        case Error_Config_Too_Old:
+        case Error_Config_Too_New:
+        case Error_In_Progress:
+        case Error_Underlay_Destination_Unreachable: // draft-ietf-p2psip-diagnostics-09
+            // "net unreachable" padded with 0
+            // "host unreachable" padded with 0
+            // "protocol unreachable" padded with 0
+            // "port unreachable" padded with 0
+            // "fragmentation needed" padded with 0
+            // "source route failed" padded with 0
+            opaque[length] error_info; // UTF-8 character string
 
-		/* This structure may be extended with new types*/
-	};
+        /* This structure may be extended with new types*/
+    };
 } ErrorResponse;
 
 struct {
-	MessageExtensionType  type;
-	Boolean               critical;
-	uint32                length;
-	select (type) {
-		case self_tuning_data: // draft-ietf-p2psip-self-tuning-04
-			SelfTuningData self_tuning_data;
+    MessageExtensionType  type;
+    Boolean               critical;
+    uint32                length;
+    select (type) {
+        case self_tuning_data: // draft-ietf-p2psip-self-tuning-06
+            SelfTuningData self_tuning_data;
 
-		case Diagnostic_Ping: // draft-ietf-p2psip-diagnostics-07
-			select (message_code) {
-				case ping_req:
-					DiagnosticsRequest diagnostics;
+        case Diagnostic_Ping: // draft-ietf-p2psip-diagnostics-09
+            select (message_code) {
+                case ping_req:
+                    DiagnosticsRequest diagnostics;
 
-				case ping_ans:
-					DiagnosticsResponse diagnostics; // Actually, it does not say what it should be, but it makes sense
-			};
+                case ping_ans:
+                    DiagnosticsResponse diagnostics; // Actually, it does not
+                                                     // say what it should be,
+                                                     // but it makes sense.
+            };
 
-		/* This structure may be extended with new types*/
-	};
+        /* This structure may be extended with new types*/
+    };
 } MessageExtension;
 
 struct {
-	MessageCode            message_code;
-	uint32                 length;
-	select (message_code) {
-		case probe_req:
-			ProbeReq       probe_req;
+    MessageCode            message_code;
+    uint32                 length;
+    select (message_code) {
+        case probe_req:
+            ProbeReq       probe_req;
 
-		case probe_ans:
-			ProbeAns       probe_ans;
+        case probe_ans:
+            ProbeAns       probe_ans;
 
-		case attach_req:
-			AttachReqAns   attach_req;
+        case attach_req:
+            AttachReqAns   attach_req;
 
-		case attach_ans:
-			AttachReqAns   attach_ans;
+        case attach_ans:
+            AttachReqAns   attach_ans;
 
-		case store_req:
-			StoreReq       store_req;
+        case store_req:
+            StoreReq       store_req;
 
-		case store_ans:
-			StoreAns       store_ans;
+        case store_ans:
+            StoreAns       store_ans;
 
-		case fetch_req:
-			FetchReq       fetch_req;
+        case fetch_req:
+            FetchReq       fetch_req;
 
-		case fetch_ans:
-			FetchAns       fetch_ans;
+        case fetch_ans:
+            FetchAns       fetch_ans;
 
-		case find_req:
-			FindReq        find_req;
+        case find_req:
+            FindReq        find_req;
 
-		case find_ans:
-			FindAns        find_ans;
+        case find_ans:
+            FindAns        find_ans;
 
-		case join_req:
-			JoinReq        join_req;
+        case join_req:
+            JoinReq        join_req;
 
-		case join_ans:
-			JoinAns        join_ans;
+        case join_ans:
+            JoinAns        join_ans;
 
-		case leave_req:
-			LeaveReq       leave_req;
+        case leave_req:
+            LeaveReq       leave_req;
 
-		case leave_ans:
-			; /* empty */
+        case leave_ans:
+            ; /* empty */
 
-		case update_req:
-			select (TopologyPlugin) {
-				case CHORD-RELOAD:
-					ChordUpdate update_req;
+        case update_req:
+            select (TopologyPlugin) {
+                case CHORD-RELOAD:
+                    ChordUpdate update_req;
 
-				/* This structure may be extended with new types if necessary*/
-			};
+            /* This structure may be extended with new types if necessary*/
+            };
 
-		case update_ans:
-			; /* empty */
+        case update_ans:
+            ; /* empty */
 
-		case route_query_req:
-			RouteQueryReq  route_query_req;
+        case route_query_req:
+            RouteQueryReq  route_query_req;
 
-		case route_query_ans:
-			select (TopologyPlugin) {
-				case CHORD-RELOAD:
-					ChordRouteQueryAns route_query_ans;
+        case route_query_ans:
+            select (TopologyPlugin) {
+                case CHORD-RELOAD:
+                    ChordRouteQueryAns route_query_ans;
 
-				/* This structure may be extended with new types if necessary*/
-			};
+            /* This structure may be extended with new types if necessary*/
+            };
 
-		case ping_req:
-			PingReq        ping_req;
+        case ping_req:
+            PingReq        ping_req;
 
-		case ping_ans:
-			PingAns        ping_ans;
+        case ping_ans:
+            PingAns        ping_ans;
 
-		case stat_req:
-			StatReq        stat_req;
+        case stat_req:
+            StatReq        stat_req;
 
-		case stat_ans:
-			StatAns        stat_ans;
+        case stat_ans:
+            StatAns        stat_ans;
 
-		case app_attach_req:
-			AppAttachReq   app_attach_req;
+        case app_attach_req:
+            AppAttachReq   app_attach_req;
 
-		case app_attach_ans:
-			AppAttachAns   app_attach_ans;
+        case app_attach_ans:
+            AppAttachAns   app_attach_ans;
 
-		case config_update_req:
-			ConfigUpdateReq config_update_req;
+        case config_update_req:
+            ConfigUpdateReq config_update_req;
 
-		case config_update_ans:
-			ConfigUpdateAns config_update_ans;
+        case config_update_ans:
+            ConfigUpdateAns config_update_ans;
 
-		case path_track_req: // draft-ietf-p2psip-diagnostics-07
-			PathTrackReq   path_tracl_req;
+        case path_track_req: // draft-ietf-p2psip-diagnostics-09
+            PathTrackReq   path_track_req;
 
-		case path_track_ans: // draft-ietf-p2psip-diagnostics-07
-			PathTrackAns   path_tracl_ans;
+        case path_track_ans: // draft-ietf-p2psip-diagnostics-09
+            PathTrackAns   path_track_ans;
 
-		case error:
-			ErrorResponse  error_reponse;
+        case error:
+            ErrorResponse  error_reponse;
 
-		/* This structure may be extended with new types if necessary*/
-	};
-	MessageExtension       extensions<0..2^32-1>;
+        /* This structure may be extended with new types if necessary*/
+    };
+    MessageExtension       extensions<0..2^32-1>;
 } MessageContents;
 
 enum {
-	X.509(0),
-	OpenPGP(1), // undefined
-	(255)
+    X.509(0),
+    OpenPGP(1), // undefined
+    (255)
 } CertificateType; // From RFC 6091. IANA registry "TLS Certificate Types"
 
 struct {
-	CertificateType     type;
-	opaque              certificate<0..2^16-1>;
+    CertificateType     type;
+    opaque              certificate<0..2^16-1>;
 } GenericCertificate;
 
 struct {
-	GenericCertificate certificates<0..2^16-1>;
-	Signature          signature;
+    GenericCertificate certificates<0..2^16-1>;
+    Signature          signature;
 } SecurityBlock;
 
 struct {
-	ForwardingHeader   header;
-	MessageContents    message;
-	SignatureBlock     signature;
+    ForwardingHeader   header;
+    MessageContents    message;
+    SignatureBlock     signature;
 } Message;
 
 enum {
-	data(128),
-	ack(129),
-	(255)
+    data(128),
+    ack(129),
+    (255)
 } FramedMessageType;
 
 struct {
-	FramedMessageType       type;
-	select (type) {
-		case data:
-			uint32              sequence;
-			uint24				length;
-			Message             message;
+    FramedMessageType       type;
+    select (type) {
+        case data:
+            uint32              sequence;
+            uint24				length;
+            Message             message;
 
-		case ack:
-			uint32              ack_sequence;
-			uint32              received; // encode packets received relative to ack_sequence
-	};
+        case ack:
+            uint32              ack_sequence;
+            uint32              received;   // encode packets received relative
+                                            // to ack_sequence
+    };
 } FramedMessage;
+
+// vim:ts=4:sw=4:et:
 
