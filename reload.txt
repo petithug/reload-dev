@@ -1,17 +1,19 @@
 // Copyright (c) 2013 IETF Trust, C.Jennings, B. Lowekamp, E. Rescorla,
-// S.Baset and H. Schulzrinne for draft-ietf-p2psip-base-24
-// Copyright (c) 2012 IETF Trust, N. Zong, X. Jiang, R. Even and Y. Zhang
-// for draft-ietf-p2psip-ddr-03.
-// Copyright (c) 2012 IETF Trust, H. Song, X. Jiang, R. Even and D. Bryan for
-// draft-ietf-p2psip-diagnostics-09.
-// Copyright (c) 2012 IETF Trust, C.Jennings, B. Lowekamp, E.Rescorla,
-// S. Baset, H. Schulzrinne and T C. Schmidt for draft-ietf-p2psip-sip-08.
-// Copyright (c) 2012 IETF Trust, J. Maenppa and G. Camarillo for
-// draft-ietf-p2psip-service-discovery-06.
-// Copryright (c) 2012 IETF Trust, J. Maenpaa, G. Camarillo and J. Hautakorpi
-// for draft-ietf-p2psip-self-tuning-06.
-// Copyright (c) 2012 IETF Trust, A. Knauf, G. Hege, T C. Schmidt and
-// M. Waehlisch for draft-ietf-p2psip-share-00.
+// S.Baset and H. Schulzrinne for draft-ietf-p2psip-base-26
+// Copyright (c) 2013 IETF Trust, N. Zong, X. Jiang, R. Even and Y. Zhang
+// for draft-ietf-p2psip-drr-04.
+// Copyright (c) 2013 IETF Trust, N. Zong, X. Jiang, R. Even and Y. Zhang
+// for draft-ietf-p2psip-rpr-04
+// Copyright (c) 2013 IETF Trust, H. Song, X. Jiang, R. Even and D. Bryan for
+// draft-ietf-p2psip-diagnostics-10.
+// Copyright (c) 2013 IETF Trust, C.Jennings, B. Lowekamp, E.Rescorla,
+// S. Baset, H. Schulzrinne and T C. Schmidt for draft-ietf-p2psip-sip-09.
+// Copyright (c) 2013 IETF Trust, J. Maenppa and G. Camarillo for
+// draft-ietf-p2psip-service-discovery-08.
+// Copryright (c) 2013 IETF Trust, J. Maenpaa, G. Camarillo and J. Hautakorpi
+// for draft-ietf-p2psip-self-tuning-08.
+// Copyright (c) 2013 IETF Trust, A. Knauf, G. Hege, T C. Schmidt and
+// M. Waehlisch for draft-ietf-p2psip-share-01.
 // Copyright (c) 2012 IETF Trust, A. Knauf, T C. Schmidt, G. Gege and
 // M. Waehlisch for draft-ietf-p2psip-disco-00.
 // Copyright (c) 2012-13 Marc Petit-Huguenin for the modifications and
@@ -49,9 +51,10 @@
 // This document covers only RFCs and standard track internet-drafts.
 
 
-typedef opaque       NodeId[NodeIdLength];  // NodeIdLength is defined
-// configuration file.
+uint32 node_id_length = 16; // NodeIdLength is defined in the configuration file
+
 // Special case: all 1 (wildcard) and all 0 (invalid)
+typedef opaque       NodeId[node_id_length];
 
 typedef opaque       ResourceId<0..2^8-1>;
 
@@ -68,7 +71,8 @@ select (destination_type) {
     /* This structure may be extended with new types */
 } DestinationData;
 
-// Note that the 0 values in the draft are named invalid<Type>, but I use the shorter name here, and in other places.
+// Note that the 0 values in the draft are named invalid<Type>, but I use the
+// shorter name here, and in other places.
 enum {
     invalid(0),
     node(1),
@@ -90,34 +94,34 @@ struct {
 enum {
     invalid(0),
     exp-forward(1),
-    extensive_routing_mode(2), // draft-ietf-p2psip-ddr-03
+    extensive_routing_mode(2), // draft-ietf-p2psip-drr-04
     (255)
 } ForwardingOptionType; // IANA registry "Forwarding Option Registry"
 
 enum {
     invalid(0),
     DDR(1),
-    RPR(2),
+    RPR(2), // draft-ietf-p2psip-rpr-04
     (255)
-} RouteMode; // draft-ietf-p2psip-ddr-03
+} RouteMode; // draft-ietf-p2psip-drr-04
 
 struct {
     RouteMode               routemode;
     OverlayLinkType         transport;
     IpAddressPort           ipaddressport;
     Destination             destination<1..2^8-1>;
-} ExtensiveRoutingModeOption; // draft-ietf-p2psip-ddr-03
+} ExtensiveRoutingModeOption; // draft-ietf-p2psip-drr-04
 
 struct {
     ForwardingOptionType     type;
     // flags 0: FORWARD_CRITICAL
     // flags 1: DESTINATION_CRITICAL
     // flags 2: RESPONSE_COPY
-    // flags 3: IGNORE_STATE_KEEPING (draft-ietf-p2psip-ddr-03)
+    // flags 3: IGNORE_STATE_KEEPING (draft-ietf-p2psip-drr-04)
     uint8                     flags;
     uint16                    length;
     select (type) {
-        case extensive_routing_mode: // draft-ietf-p2psip-ddr-03
+        case extensive_routing_mode: // draft-ietf-p2psip-drr-04
             ExtensiveRoutingModeOption mode_option;
 
         /* This type may be extended */
@@ -186,8 +190,8 @@ enum {
     exp_a_ans(36),
     exp_b_req(37),
     exp_b_ans(38),
-    path_track_req(101), // draft-ietf-p2psip-diagnostics-09
-    path_track_ans(102), // draft-ietf-p2psip-diagnostics-09
+    path_track_req(101), // draft-ietf-p2psip-diagnostics-10
+    path_track_ans(102), // draft-ietf-p2psip-diagnostics-10
     error(0xffff),
     (0..2^16-1)
 } MessageCode; // IANA registry "RELOAD Message Code"
@@ -319,7 +323,7 @@ struct {
 
 enum {
     INVALID(0),
-    SIP-REGISTRATION(1), // draft-ietf-p2psip-sip-08
+    SIP-REGISTRATION(1), // draft-ietf-p2psip-sip-09
     TURN-SERVICE(2),
     CERTIFICATE_BY_NODE(3),
     RESERVED_ROUTING_TABLE_SIZE(4),
@@ -335,8 +339,8 @@ enum {
     RESERVED_LAST_CONTACT(14),
     RESERVED_RTT(15),
     CERTIFICATE_BY_USER(16),
-    REDIR(104), // draft-p2psip-service-discovery-06
-    ACCESS-CONTROL-LIST(105), // draft-ietf-p2psip-share-00
+    ACCESS-CONTROL-LIST(17), // draft-ietf-p2psip-share-01
+    REDIR(104), // draft-p2psip-service-discovery-08
     DISCO-REGISTRATION(106), // draft-ietf-p2psip-disco-00
     (0..2^32-1)
 } KindId; // IANA registry "RELOAD Data Kind-ID"
@@ -350,7 +354,7 @@ enum {
     sip_registration_uri(1),
     sip_registration_route(2),
     (255)
-} SipRegistrationType; // draft-ietf-p2psip-sip-08
+} SipRegistrationType; // draft-ietf-p2psip-sip-09
 
 select (SipRegistration.type) {
     case sip_registration_uri:
@@ -361,18 +365,18 @@ select (SipRegistration.type) {
         Destination          destination_list<0..2^16-1>;
 
     /* This type can be extended */
-} SipRegistrationData; // draft-ietf-p2psip-sip-08
+} SipRegistrationData; // draft-ietf-p2psip-sip-09
 
 struct {
     SipRegistrationType   type;
     uint16                length;
     SipRegistrationData   data;
-} SipRegistration; // draft-ietf-p2psip-sip-08
+} SipRegistration; // draft-ietf-p2psip-sip-09
 
 enum {
     none(0),
     (255)
-} RedirServiceProviderExtType; // draft-p2psip-service-discovery-06
+} RedirServiceProviderExtType; // draft-p2psip-service-discovery-08
 
 struct {
     RedirServiceProviderExtType	type;
@@ -385,7 +389,7 @@ struct {
     select (type) {
     /* This type can be extended */
     } extension;
-} RedirServiceProvider; // draft-p2psip-service-discovery-06
+} RedirServiceProvider; // draft-p2psip-service-discovery-08
 
 struct {
     Boolean                exists;
@@ -394,21 +398,21 @@ struct {
         case TURN_SERVICE:
             TurnServer     turn_server;
 
-        case SIP-REGISTRATION: // draft-ietf-p2psip-sip-08
+        case SIP-REGISTRATION: // draft-ietf-p2psip-sip-09
             SipRegistration sip_registration;
 
         case CERTIFICATE_BY_NODE:
         case CERTIFICATE_BY_USER:
             opaque          certificate[length];
 
-        case REDIR: // draft-p2psip-service-discovery-06
+        case REDIR: // draft-p2psip-service-discovery-08
             RedirServiceProvider redir;
 
         case ACCESS-CONTROL-LIST:
-            AccessControlListItem access_control; // draft-ietf-p2psip-share-00
+            AccessControlListItem access_control; // draft-ietf-p2psip-share-01
 
         case DISCO-REGISTRATION:
-            DisCoRegistration disco_registration; // draft-ietf-p2psip-disco-00
+            DisCoRegistration disco_registration; // draft-ietf-p2psip-disco-01
 
         /* This structure may be extended */
     };
@@ -426,8 +430,18 @@ struct {
     DataValue              value;
 } DictionaryEntry;
 
+// INVALID and RESERVED do not make sense.
+enum {
+    SINGLE,
+    ARRAY,
+    DICTIONARY,
+    EXP-DATA,
+} DataModel; // IANA registry "RELOAD Data Model"
+
+DataModel data_model; // data_model in configuration file
+
 struct {
-    select (dataModel) {  // Derived from KindId. IANA registry "RELOAD Data Model"
+    select (data_model) {  // Derived from KindId. IANA registry "RELOAD Data Model"
         case single_value:
             DataValue             single_value_entry;
 
@@ -542,7 +556,7 @@ struct {
     uint64                  generation;
     uint16                  length;
 
-    select (dataModel) {
+    select (data_model) {
         case single_value:
             ; /* empty */
 
@@ -585,17 +599,27 @@ struct {
     FindKindData                results<0..2^16-1>;
 } FindAns;
 
+enum { CHORD-RELOAD } TopologyPlugin;
+
+TopologyPlugin topology_plugin = CHORD-RELOAD; // Defined in configuration file
+
 struct {
     NodeId                joining_peer_id;
     uint16                length;
-    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    select (topology_plugin) {
+        case CHORD-RELOAD:
+            ; /* empty */
+
     /* This structure may be extended with new types if necessary */
     };
 } JoinReq;
 
 struct {
     uint16                length;
-    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    select (topology_plugin) {
+        case CHORD-RELOAD:
+            ; /* empty */
+
     /* This structure may be extended with new types if necessary */
     };
 } JoinAns;
@@ -621,13 +645,16 @@ struct {
 struct {
     NodeId                leaving_peer_id;
     uint16                length;
-    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    select (topology-plugin) {
         case CHORD-RELOAD:
             ChordLeaveData leave_data;
 
         /* This structure may be extended with new types if necessary */
     };
 } LeaveReq;
+
+struct {
+} LeaveAns;
 
 enum {
     invalid(0),
@@ -653,13 +680,16 @@ struct {
             NodeId              successors<0..2^16-1>;
             NodeId              fingers<0..2^16-1>;
     };
-} ChordUpdate;
+} ChordUpdateReq;
+
+struct {
+} ChordUpdateAns;
 
 struct {
     Boolean                send_update;
     Destination            destination;
     uint16                length;
-    select (TopologyPlugin) { // TopologyPlugin defined in configuration file
+    select (topology_plugin) {
     /* This structure may be extended with new types if necessary */
     };
 } RouteQueryReq;
@@ -700,7 +730,7 @@ struct {
 } DictionaryEntryMeta;
 
 struct {
-    select (dataModel) {
+    select (data_model) {
         case single_value:
             MetaData              single_value_entry;
 
@@ -777,8 +807,8 @@ struct {
 enum {
     invalid(0),
     exp-ext(1),
-    Diagnostic_Ping(2), // draft-ietf-p2psip-diagnostics-09
-    self_tuning_data(3), // draft-ietf-p2psip-self-tuning-06.  Currently 1!
+    Diagnostic_Ping(2), // draft-ietf-p2psip-diagnostics-10
+    self_tuning_data(3), // draft-ietf-p2psip-self-tuning-08
     (2^16-1)
 } MessageExtensionType; // IANA registry "RELOAD Extensions Registry"
 
@@ -786,16 +816,16 @@ struct {
     uint32                   network_size;
     uint32                   join_rate;
     uint32                   leave_rate;
-} SelfTuningData; // draft-ietf-p2psip-self-tuning-06
+} SelfTuningData; // draft-ietf-p2psip-self-tuning-08
 
 enum {
     (2^16-1)
-} DiagnosticExtensionRequestType; // draft-ietf-p2psip-diagnostics-09
+} DiagnosticKindId ; // draft-ietf-p2psip-diagnostics-10
 
 struct {
-    DiagnosticExtensionRequestType type;
+    DiagnosticKindId kind;
     opaque diagnostic_extension_contents<0..2^32-1>;
-} DiagnosticExtension; // draft-ietf-p2psip-diagnostics-09
+} DiagnosticExtension; // draft-ietf-p2psip-diagnostics-10
 
 struct {
     uint64 expiration;
@@ -820,13 +850,12 @@ struct {
     // dMFlags 63: reserved always 0
     uint64 dMFlags;
     DiagnosticExtension diagnostic_extensions<0..2^32-1>; // Different from spec.
-}
-} DiagnosticsRequest; // draft-ietf-p2psip-diagnostics-09
+} DiagnosticsRequest; // draft-ietf-p2psip-diagnostics-10
 
 struct {
     Destination destination;
     DiagnosticsRequest request; // Was DiagnosticRequest
-} PathTrackReq;	 // draft-ietf-p2psip-diagnostics-09
+} PathTrackReq;	 // draft-ietf-p2psip-diagnostics-10
 
 enum { // Different from spec
     reserved_0(0x0000),
@@ -849,7 +878,7 @@ enum { // Different from spec
     local_user(0xfffe),
     reserver_65535(0xffff),
     (2^16-1)
-} DiagnosticKindId; // draft-ietf-p2psip-diagnostics-09
+} DiagnosticKindId; // draft-ietf-p2psip-diagnostics-10
 
 struct {
     DiagnosticKindId kind;
@@ -868,7 +897,7 @@ struct {
             uint32 bandwidth; // in Kbps
 
         case SOFTWARE_VERSION:
-            opaque[length] software_version; // ASCII encoding, format = HTTP User-Agent/Server
+            opaque software_version[length]; // ASCII encoding, format = HTTP User-Agent/Server
 
         case MACHINE_UPTIME:
             uint64 machine_uptime; // in seconds
@@ -912,25 +941,25 @@ struct {
         /* This structure may be extended with new types*/
     };
     opaque diagnostic_info_contents<0..2^16-1>;
-} DiagnosticInfo; // draft-ietf-p2psip-diagnostics-09
+} DiagnosticInfo; // draft-ietf-p2psip-diagnostics-10
 
 struct {
     uint64 expiration;
     uint64 timestamp_received;
     uint8 hop_counter;
     DiagnosticInfo diagnostic_info_list<0..2^32-1>;
-} DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-09
+} DiagnosticsResponse; // draft-ietf-p2psip-diagnostics-10
 
 struct {
     Destination next_hop;
     DiagnosticResponse response;
-} PathTrackAns; // draft-ietf-p2psip-diagnostics-09
+} PathTrackAns; // draft-ietf-p2psip-diagnostics-10
 
 
 enum {
     pattern(1),
     (255)
-} ResourceNameType; // draft-ietf-p2psip-share-00
+} ResourceNameType; // draft-ietf-p2psip-share-01
 
 struct {
     ResourceNameType type;
@@ -941,14 +970,14 @@ struct {
 
         /* Types can be extended */
     }
-} ResourceNameExtension; // draft-ietf-p2psip-share-00
+} ResourceNameExtension; // draft-ietf-p2psip-share-01
 
 struct {
     ResourceNameExtension res_name_ext;
     opaque to_user<0..2^16-1>;
     KindId kind;
     Boolean allow_delegation;
-} AccessControlListItem; // draft-ietf-p2psip-share-00
+} AccessControlListItem; // draft-ietf-p2psip-share-01
 
 struct {
     ResourceNameExtension res_name_ext;
@@ -977,12 +1006,12 @@ enum {
     Error_In_Progress(17),
     Error_Exp_A(18),
     Error_Exp_B(19),
-    Error_Underlay_Destination_Unreachable(101), // draft-ietf-p2psip-diagnostics-09
-    Error_Underlay_Time_Exceeded(102), // draft-ietf-p2psip-diagnostics-09
-    Error_Message_Expired(103), // draft-ietf-p2psip-diagnostics-09
-    Error_Upstream_Misrouting(104), // draft-ietf-p2psip-diagnostics-09
-    Error_Loop_Detected(105), // draft-ietf-p2psip-diagnostics-09
-    Error_TTL_Hops_Exceeded(106), // draft-ietf-p2psip-diagnostics-09
+    Error_Underlay_Destination_Unreachable(101), // draft-ietf-p2psip-diagnostics-10
+    Error_Underlay_Time_Exceeded(102), // draft-ietf-p2psip-diagnostics-10
+    Error_Message_Expired(103), // draft-ietf-p2psip-diagnostics-10
+    Error_Upstream_Misrouting(104), // draft-ietf-p2psip-diagnostics-10
+    Error_Loop_Detected(105), // draft-ietf-p2psip-diagnostics-10
+    Error_TTL_Hops_Exceeded(106), // draft-ietf-p2psip-diagnostics-10
     (0..2^16-1)
 } ErrorCode; // IANA registry "RELOAD Error Code"
 
@@ -1010,14 +1039,14 @@ struct {
         case Error_Config_Too_Old:
         case Error_Config_Too_New:
         case Error_In_Progress:
-        case Error_Underlay_Destination_Unreachable: // draft-ietf-p2psip-diagnostics-09
+        case Error_Underlay_Destination_Unreachable: // draft-ietf-p2psip-diagnostics-10
             // "net unreachable" padded with 0
             // "host unreachable" padded with 0
             // "protocol unreachable" padded with 0
             // "port unreachable" padded with 0
             // "fragmentation needed" padded with 0
             // "source route failed" padded with 0
-            opaque[length] error_info; // UTF-8 character string
+            opaque error_info[length]; // UTF-8 character string
 
         /* This structure may be extended with new types*/
     };
@@ -1028,10 +1057,10 @@ struct {
     Boolean               critical;
     uint32                length;
     select (type) {
-        case self_tuning_data: // draft-ietf-p2psip-self-tuning-06
+        case self_tuning_data: // draft-ietf-p2psip-self-tuning-08
             SelfTuningData self_tuning_data;
 
-        case Diagnostic_Ping: // draft-ietf-p2psip-diagnostics-09
+        case Diagnostic_Ping: // draft-ietf-p2psip-diagnostics-10
             select (message_code) {
                 case ping_req:
                     DiagnosticsRequest diagnostics;
@@ -1090,24 +1119,28 @@ struct {
             LeaveReq       leave_req;
 
         case leave_ans:
-            ; /* empty */
+            LeaveAns       leave_ans;
 
         case update_req:
-            select (TopologyPlugin) {
+            select (topology_plugin) {
                 case CHORD-RELOAD:
-                    ChordUpdate update_req;
+                    ChordUpdateReq update_req;
 
             /* This structure may be extended with new types if necessary*/
             };
 
         case update_ans:
-            ; /* empty */
+            select (topology_plugin) {
+                case CHORD-RELOAD:
+                    ChordUpdateAns update_ans;
+
+            /* This structure may be extended with new types if necessary*/
 
         case route_query_req:
             RouteQueryReq  route_query_req;
 
         case route_query_ans:
-            select (TopologyPlugin) {
+            select (topology_plugin) {
                 case CHORD-RELOAD:
                     ChordRouteQueryAns route_query_ans;
 
@@ -1138,10 +1171,10 @@ struct {
         case config_update_ans:
             ConfigUpdateAns config_update_ans;
 
-        case path_track_req: // draft-ietf-p2psip-diagnostics-09
+        case path_track_req: // draft-ietf-p2psip-diagnostics-10
             PathTrackReq   path_track_req;
 
-        case path_track_ans: // draft-ietf-p2psip-diagnostics-09
+        case path_track_ans: // draft-ietf-p2psip-diagnostics-10
             PathTrackAns   path_track_ans;
 
         case error:
